@@ -25,12 +25,17 @@ npm start
 ```
 
 ● API documentation
+```bash
 GET /api/tasks - Get all tasks 
 ● POST /api/tasks - Create a new task 
 ● PUT /api/tasks/:id - Update a task 
 ● DELETE /api/tasks/:id - Delete a task 
 ● PATCH /api/tasks/:id/toggle - Toggle task completion status
+```
 
 Time spent on each part
+```bash
 backend: 1:45 hr
 frontend: 2:15 hours
+```
+
