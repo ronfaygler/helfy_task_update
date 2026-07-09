@@ -63,9 +63,11 @@ router.delete("/:id", (req, res) => {
     }
 });
 
+// Toggle a task
 router.patch("/:id/toggle", (req, res) => {
     try{
         const id = req.params.id;
+        console.log("id", id);
         const task = taskModel.toggle(id);
         if (!task){
             return res.status(400).json({ error: "The task does not exist" });

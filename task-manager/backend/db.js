@@ -63,7 +63,7 @@ class taskModel{
             return null;
         }
         const { title, description, priority } = t;
-        const index = tasks.findIndex(task => task.id === parseInt(id));
+        const index = tasks.findIndex(task => String(task.id) === String(id));
         if (index === -1) return null;
         tasks[index].title = title;
         tasks[index].description = description;
@@ -73,7 +73,7 @@ class taskModel{
 
     static delete(id) {
         console.log("id", id);
-        const index = tasks.findIndex(task => task.id === parseInt(id,10));
+        const index = tasks.findIndex(task => String(task.id) === String(id));
         console.log("index", index);
         if (index === -1) return null;
         tasks.splice(index, 1);
@@ -81,7 +81,7 @@ class taskModel{
     }
 
     static toggle(id) {
-        const index = tasks.findIndex(task => task.id === parseInt(id));
+        const index = tasks.findIndex(task => String(task.id) === String(id));
         if (index === -1) return null;
         tasks[index].completed = !tasks[index].completed;
         return tasks[index];
