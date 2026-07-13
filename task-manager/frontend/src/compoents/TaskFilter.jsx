@@ -1,4 +1,4 @@
-function Filter({ filterTasks, setFilter }) {
+function TaskFilter({ filterTasks, setFilter }) {
     return (
         <>
             <h2> Filter </h2>
@@ -8,10 +8,10 @@ function Filter({ filterTasks, setFilter }) {
             }}>
                 <option value="all">All</option>
                 <option value="completed">Completed</option>
-                <option value="not completed">Not Completed</option>
+                <option value="pending">Pending</option>
             </select>
         </>
     );
 }
 
-export default Filter;
+export default TaskFilter;

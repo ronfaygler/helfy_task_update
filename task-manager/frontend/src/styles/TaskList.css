@@ -1,0 +1,26 @@
+.carousel {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+}
+
+.track {
+  display: flex;
+  flex-shrink: 0;
+  white-space: nowrap;
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0%);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.carousel:hover .track {
+  animation-play-state: paused;
+}

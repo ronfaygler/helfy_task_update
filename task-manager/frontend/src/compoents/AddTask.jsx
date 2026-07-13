@@ -1,46 +1,48 @@
 
 import { useState } from "react";
+import { createTask } from "../services/taskService";
 
-function AddTask({ setTasks, filterTasks, tasks, filter }) {
+function AddTask({ setTasks, filterTasks, tasks, filter, validateTask }) {
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     
     const addTask = async (e) => {
         e.preventDefault();
-        if (!title || !description || !priority) {
-            alert("Please fill in all fields");
+        if (!validateTask({ title, description, priority })) {
             return;
         }
-        if (priority !== "low" && priority !== "medium" && priority !== "high") {
-            alert("Priority must be low, medium, or high");
-            return;
+        setLoading(true);
+        try{
+            const data = await createTask({ title, description, priority });
+            setTasks([...tasks, data]);
+            filterTasks(filter, [...tasks, data]);
+            setTitle("");
+            setDescription("");
+            setPriority("");
+        } catch (error) {
+            setError("Failed to add task. Please try again.");
+            console.error("Failed to add task", error);
         }
-        const response = await fetch("http://localhost:4000/api/tasks", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ title, description, priority }),
-        });
-        const data = await response.json();
-        setTasks([...tasks, data]);
-        filterTasks(filter, [...tasks, data]);
-        setTitle("");
-        setDescription("");
-        setPriority("");
-        console.log(data);
+        finally {
+            setLoading(false);
+        }
     }
 
     return (
         <>
             <h2>Add Task</h2>
+            {error && <div className="error">{error}</div>}
             <form onSubmit={addTask}>
                 <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
                 <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
                 <input type="text" placeholder="Priority" value={priority} onChange={(e) => setPriority(e.target.value)} />
-                <button type="submit">Add Task</button>
+                <button type="submit">
+                    {loading ? "Adding..." : "Add Task"}
+                </button>
             </form>
         </>
     );

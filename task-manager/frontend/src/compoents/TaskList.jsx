@@ -1,26 +1,44 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import * as taskService from "../services/taskService";
+import TaskItem from "./TaskItem";
+import "../styles/TaskList.css";
+// import { error } from "node:console";
 
-function TaskList({ tasks, setTasks, filteredTasks, setFilteredTasks, filterTasks, filter }) {
+function TaskList({ tasks, setTasks, filteredTasks, setFilteredTasks, filterTasks, filter, validateTask }) {
+    const [editingTask, setEditingTask] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
     useEffect(() => {
-        fetch("http://localhost:4000/api/tasks")
-            .then(res => res.json())
+            taskService.getAllTasks()
             .then(data => {
-                setTasks(data);
-                setFilteredTasks(data);
-            });
+                setTasks(data)
+                setFilteredTasks(data)
+            })
+            .catch(() => {
+                setError("Failed to load tasks. Please try again.");
+                console.error("Failed to load tasks");
+            })
+            .finally(() => {
+                setLoading(false);
+            })
     }, []);
 
     const handleEdit = async (task) => {
-        const response = await fetch("http://localhost:4000/api/tasks/" + task.id,{
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ title, description, priority }),
-        })
-        const data = await response.json();
-        setTasks(tasks.map(task => task.id === data.id ? data : task));
-        console.log("Edit task:", task);
+        setLoading(true);
+        if (!validateTask(task)) {
+            return;
+        }
+        try {
+            const data = await taskService.updateTask(task);
+            setTasks(tasks.map(task => task.id === data.id ? data : task));
+            setFilteredTasks(filteredTasks.map(task => task.id === data.id ? data : task));
+            setEditingTask(null);
+        } catch (error) {
+            console.error("Failed to update task", error);
+            setError("Failed to update task. Please try again.");
+        }
+        setLoading(false);
     }
     
     const deleteTask = async (id) => {
@@ -28,69 +46,51 @@ function TaskList({ tasks, setTasks, filteredTasks, setFilteredTasks, filterTask
         if (!confirm("Are you sure you want to delete this task?")) {
             return;
         }
-        await fetch(`http://localhost:4000/api/tasks/${id}`, { method: "DELETE" });
-        setTasks(prev => prev.filter(task => task.id !== id));
-        setFilteredTasks(prev => prev.filter(task => task.id !== id));
+        try{
+            await taskService.deleteTask(id);
+            setTasks(prev => prev.filter(task => task.id !== id));
+            setFilteredTasks(prev => prev.filter(task => task.id !== id));
+        } catch (error) {
+            console.error("Failed to delete task", error);
+            setError("Failed to delete task. Please try again.");
+        }
     }
 
     const toggleComplete = async (id) => {
-        console.log("tasks", tasks);
-        const task = tasks.find(task => task.id === id);
-        console.log("task", task);
-        const response = await fetch(`http://localhost:4000/api/tasks/${id}/toggle`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ completed: !tasks.find(task => task.id === id).completed }),
-        });
-        const data = await response.json();
-        const currTasks = tasks.map(task => task.id === data.id ? data : task);
-        setTasks(currTasks);
-        setFilteredTasks(prevFiltered => prevFiltered.map(task => task.id === data.id ? data : task));
-        filterTasks(filter, currTasks);
+        try {
+            const data = await taskService.toggleComplete(id, tasks);
+            const currTasks = tasks.map(task => task.id === data.id ? data : task);
+            setTasks(currTasks);
+            setFilteredTasks(prevFiltered => prevFiltered.map(task => task.id === data.id ? data : task));
+            filterTasks(filter, currTasks);
+        } catch (error) {
+            console.error("Failed to toggle complete", error);
+            setError("Failed to toggle complete. Please try again.");
+        }
     }
 
     return (
         <div>            
             <h2>Task List</h2>
-             <div className="carousel">
-                <div className="track">
-                {filteredTasks.map((task) => (
-                <div className="task-card" key={task.id}>
-                    <h3>{task.title}</h3>
-                    <p>{task.description}</p>
-                    <p>{task.completed ? "Completed" : "Not Completed"}</p>
-                    <p>{task.priority}</p>
-                    <button onClick={() => deleteTask(task.id)}>Delete</button>
-                    <input 
-                        type="checkbox" 
-                        style={{ width: "100px", height: "100px" }}
-                        checked={task.completed} 
-                        onChange={() => toggleComplete(task.id)} 
-                    />
-                </div>
-                ))}
-                </div>
-                
-                <div className="track">
-                    {filteredTasks.map((task) => (
-                    <div className="task-card" key={task.id}>
-                        <h3>{task.title}</h3>
-                        <p>{task.description}</p>
-                        <p>{task.completed ? "Completed" : "Not Completed"}</p>
-                        <p>{task.priority}</p>
-                        <button onClick={() => deleteTask(task.id)}>Delete</button>
-                        <input 
-                            type="checkbox" 
-                            style={{ width: "100px", height: "100px" }}
-                            checked={task.completed} 
-                            onChange={() => toggleComplete(task.id)} 
-                        />
+                {error && <div className="error">{error}</div>}
+                {filteredTasks.length === 0 && <div>No tasks found</div>}
+                {loading ? <div>Loading...</div> : (
+                <div className="carousel">
+                    
+                    <div className="track">
+                        {filteredTasks && filteredTasks.map((task) => (
+                            <TaskItem key={task.id} task={task} editingTask={editingTask} setEditingTask={setEditingTask} handleEdit={handleEdit} deleteTask={deleteTask} toggleComplete={toggleComplete} loading={loading} />
+                        ))}
                     </div>
-                ))}
+                    
+                    {filteredTasks.length < 6 && 
+                    <div className="track">
+                        {filteredTasks && filteredTasks.map((task) => (
+                            <TaskItem key={task.id} task={task} editingTask={editingTask} setEditingTask={setEditingTask} handleEdit={handleEdit} deleteTask={deleteTask} toggleComplete={toggleComplete} loading={loading} />
+                        ))}
+                    </div>}
                 </div>
-            </div>
+                )}
         </div>
     );
 }

@@ -72,9 +72,7 @@ class taskModel{
     }
 
     static delete(id) {
-        console.log("id", id);
         const index = tasks.findIndex(task => String(task.id) === String(id));
-        console.log("index", index);
         if (index === -1) return null;
         tasks.splice(index, 1);
         return true;

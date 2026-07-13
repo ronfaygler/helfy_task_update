@@ -1,14 +1,14 @@
 const { Router } = require("express");
-
 const router = Router();
 const { taskModel } = require("../db.js");
+const validateTask = require("../middleware/validator.js");
 
 // Get all tasks
 router.get("/", (req, res) => {
     try{
         const tasks = taskModel.getAll();
         if (!tasks) {
-            return res.status(400).json({ error: "No tasks found" });
+            return res.status(200).json({ tasks: [] });
         }
         res.status(200).json(tasks);
     }
@@ -18,28 +18,28 @@ router.get("/", (req, res) => {
 });
 
 // Create a new task
-router.post("/", (req, res) => {
+router.post("/", validateTask, (req, res) => {
     try{
         const { title, description, priority } = req.body;
         const task = taskModel.create({ title, description, priority });
         if (!task) {
-            return res.status(400).json({ error: "the task could not be created due to missing or invalid fields" });
+            return res.status(400).json({ error: "The task could not be created due to missing or invalid fields" });
         }
         res.status(201).json(task);
     }
     catch(error){
-        res.status(501).json({ error: "Failed to create task" });
+        res.status(500).json({ error: "Failed to create task" });
     }
 });
 
 // Update a task
-router.put("/:id", (req, res) => {
+router.put("/:id", validateTask, (req, res) => {
     try{
         const id = req.params.id;
         const { title, description, priority } = req.body;
         const task = taskModel.update(id, { title, description, priority });
         if (!task){
-            return res.status(400).json({ error: "The task does not exist" });
+            return res.status(404).json({ error: "The task does not exist" });
         }
         res.status(200).json(task);
     }
@@ -54,7 +54,7 @@ router.delete("/:id", (req, res) => {
         const id = req.params.id;
         const task = taskModel.delete(id);
         if (!task){
-            return res.status(400).json({ error: "the task does not exist" });
+            return res.status(404).json({ error: "The task does not exist" });
         }
         res.status(200).json(task);
     }
@@ -67,10 +67,9 @@ router.delete("/:id", (req, res) => {
 router.patch("/:id/toggle", (req, res) => {
     try{
         const id = req.params.id;
-        console.log("id", id);
         const task = taskModel.toggle(id);
         if (!task){
-            return res.status(400).json({ error: "The task does not exist" });
+            return res.status(404).json({ error: "The task does not exist" });
         }
         res.status(200).json(task);
     }
